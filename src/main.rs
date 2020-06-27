@@ -1,3 +1,5 @@
+extern crate blindfold_chess;
+use blindfold_chess::hello_world;
 fn main() {
-    println!("Hello, world!");
+    hello_world();
 }
