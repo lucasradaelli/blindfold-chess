@@ -17,7 +17,7 @@ fn empty_description() -> io::Result<()> {
 }
 
 #[test]
-fn reads_fen() -> io::Result<()> {
+fn converts_single_exercise() -> io::Result<()> {
     let pgn = b"
 [White \"player1\"]
 [Black \"player2\"]
@@ -25,8 +25,9 @@ fn reads_fen() -> io::Result<()> {
         ";
     let mut reader = BufferedReader::new_cursor(&pgn[..]);
     let mut position_converter = PositionConverter::new();
-    let description  = reader.read_game(&mut position_converter).unwrap().unwrap();
-    let result = "White to move:
+    let description = reader.read_game(&mut position_converter)?.unwrap();
+    let result = "Exercise 1:
+White to move:
 White:
 Pawn Ana2
 Pawn Bela2
@@ -62,7 +63,74 @@ Rook Hector8
 Queen David8
 King Eva8
 ";
-    
+
+    assert_eq!(&description[..], result);
+    Ok(())
+}
+
+#[test]
+fn converts_multiple_exercises() -> io::Result<()> {
+    let pgn = b"
+[FEN \"7k/8/8/8/8/8/8/6RK w - - 0 1\"]
+
+ 1-0
+
+[FEN \"6qk/8/8/8/8/8/8/7K b - - 0 1\"]
+
+ 0-1
+        ";
+    let mut reader = BufferedReader::new_cursor(&pgn[..]);
+    let mut position_converter = PositionConverter::new();
+    let mut description = String::new();
+    while let Some(single_exercise) = reader.read_game(&mut position_converter)? {
+        description.push_str(&single_exercise);
+    }
+
+    let result = "Exercise 1:
+White to move:
+White:
+Rook Gustav1
+King Hector1
+Black:
+King Hector8
+Exercise 2:
+Black to move:
+Black:
+Queen Gustav8
+King Hector8
+White:
+King Hector1
+";
+
+    assert_eq!(&description[..], result);
+    Ok(())
+}
+
+#[test]
+fn parses_exercise_with_move_solutions() -> io::Result<()> {
+    let pgn = b"
+[FEN \"7k/8/8/8/8/8/8/6RK w - - 0 1\"]
+
+1. Kh2 Kh7 2. Rg5 Kh8
+
+ 1-0
+        ";
+    let mut reader = BufferedReader::new_cursor(&pgn[..]);
+    let mut position_converter = PositionConverter::new();
+    let description = reader.read_game(&mut position_converter)?.unwrap();
+
+    let result = "Exercise 1:
+White to move:
+White:
+Rook Gustav1
+King Hector1
+Black:
+King Hector8
+Solution:
+1. King Hector2 King Hector7
+2. Rook Gustav5 King Hector8
+";
+
     assert_eq!(&description[..], result);
     Ok(())
 }
