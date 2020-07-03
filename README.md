@@ -1,53 +1,64 @@
-# New Project Template
+# Blindfold-chess: a tool to convert chess positions to an accessible  format
+## Introduction
+This tool transforms chess positions [in FEN format](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation) from a [pgn file](https://en.wikipedia.org/wiki/Portable_Game_Notation) into an accessible format which is easy to read by [screen readers](https://en.wikipedia.org/wiki/Screen_reader).
 
-This repository contains a template that can be used to seed a repository for a
-new Google open source project.
+The main audience of this tool are blind chess players who are looking for to study chess games or chess tactics exercises, who can benefit by the output of this tool, which is more readable by a screen reader than hearing the FEN / pgn with a Screen Reader.
 
-See [go/releasing](http://go/releasing) (available externally at
-https://opensource.google/docs/releasing/) for more information about
-releasing a new Google open source project.
+The common use case is getting a pgn file with several chess tactics exercises and their solutions, applying this tool, and studying using the resulting output.
 
-This template uses the Apache license, as is Google's default.  See the
-documentation for instructions on using alternate license.
+For example:
+- pgn file:
+```
+[FEN \"7k/8/8/8/8/8/8/6RK w - - 0 1\"]
 
-## How to use this template
-
-1. Check it out from GitHub.
-    * There is no reason to fork it.
-1. Create a new local repository and copy the files from this repo into it.
-1. Modify README.md and docs/contributing.md to represent your project, not the
-   template project.
-1. Develop your new project!
-
-``` shell
-git clone https://github.com/google/new-project
-mkdir my-new-thing
-cd my-new-thing
-git init
-cp -r ../new-project/* ../new-project/.github .
-git add *
-git commit -a -m 'Boilerplate for new Google open source project'
+1. Kh2
+```
+- Output:
+```
+Exercise 1:
+White to move:
+White:
+Rook Gustav1
+King Hector1
+Black:
+King Hector8
+Solution:
+1. King Hector2
 ```
 
-## Source Code Headers
+This is still a work in progress.
 
-Every file containing source code must include copyright and license
-information. This includes any JS/CSS files that you might be serving out to
-browsers. (This is to help well-intentioned people avoid accidental copying that
-doesn't comply with the license.)
+TODO: Link blog post with more info about the tool and scenarios where it is useful.
 
-Apache header:
+## Building
+Prerequisites:
+- [Install Rust and Cargo](https://www.rust-lang.org/tools/install)
+- Build the program:
+```shell
+cargo build --release
+```
+- For testing changes when contributing:
+```shell
+cargo test
+```
 
-    Copyright 2020 Google LLC
+## Usage
+```shell
+./blindfold-chess <input_file.pgn> <output_file.txt>
+```
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Where:
+- input_file.pgn: a pgn file with one or more chess games / exercises.
+- output_file.txt: the path of the output file to write the converted chess games / exercises.
 
-        https://www.apache.org/licenses/LICENSE-2.0
+## Contributing
+[Please see contributing page](docs/contributing.md)
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+## Feedback
+Feedback is always welcome. Note that this is my first Rust project, if you notice ways I can be more precise in the Rust world let me know!
+
+## Future work
+- Implement side line descriptions
+- Implement chess engine analysis descriptions
+- Implement embeding comments from pgn files into solutions
+- Implement a game only mode (currently, only exercise mode is supported)
