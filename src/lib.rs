@@ -1,18 +1,17 @@
 #[cfg(test)]
 mod tests;
 
-use pgn_reader::{CastlingSide, File, Rank, Role, Square};
+use pgn_reader::{CastlingSide, Role};
 use pgn_reader::{Nag, Outcome, RawComment, RawHeader, San, SanPlus, Skip, Visitor};
 use pleco::board::{piece_locations, Board};
 use pleco::core::sq::SQ;
-use pleco::core::File as ChessFile; // To avoid naming colision with pgn_reader::File.
 use pleco::core::Player;
 use std;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::str;
 
-struct PositionConverter {
+pub struct PositionConverter {
     // The FEN of the position coming from the pgn header.
     starting_fen: String,
     // Holds the pgn moves, converted to an accessible-friendly version.
@@ -26,7 +25,7 @@ struct PositionConverter {
 }
 
 impl PositionConverter {
-    fn new() -> PositionConverter {
+    pub fn new() -> PositionConverter {
         PositionConverter {
             starting_fen: String::from(""),
             moves: String::from(""),
@@ -229,6 +228,15 @@ impl Visitor for PositionConverter {
     fn outcome(&mut self, _outcome: Option<Outcome>) {}
 
     fn end_game(&mut self) -> Self::Result {
+        // If there was an odd ply, this means that |moves| is missing a new line to end it.
+        if self.ply_count % 2 == 1 {
+            unsafe {
+                let buffer = self.moves.as_mut_vec();
+                let index = buffer.len() - 1;
+                buffer[index] = '\n' as u8;
+            }
+        }
+
         if !self.starting_fen.is_empty() {
             let board = Board::from_fen(&self.starting_fen[..]).unwrap();
             let board_pieces = board.get_piece_locations();
@@ -248,8 +256,4 @@ impl Visitor for PositionConverter {
         // Alternative 2:
         std::mem::replace(&mut self.final_description, String::new())
     }
-}
-
-pub fn hello_world() {
-    println!("Hello, world!");
 }
