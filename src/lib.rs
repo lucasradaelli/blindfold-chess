@@ -250,6 +250,7 @@ impl Visitor for PositionConverter {
         // Clears fields for next round.
         self.starting_fen.clear();
         self.moves.clear();
+        self.ply_count = 0;
         // TODO: is there a way to return self.final_description directly from this mutable reference?
         // alternative 1:
         //self.final_description.clone()
