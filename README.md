@@ -28,6 +28,8 @@ Solution:
 
 This is still a work in progress.
 
+This is not an officially supported Google product, and only a personal project of Lucas.
+
 TODO: Link blog post with more info about the tool and scenarios where it is useful.
 
 ## Building
