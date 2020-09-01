@@ -16,20 +16,44 @@
 
 extern crate blindfold_chess;
 use blindfold_chess::PositionConverter;
+use clap::{App, Arg};
 use pgn_reader::BufferedReader;
-use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
 fn main() -> std::io::Result<()> {
-    let args: Vec<String> = env::args().collect();
-    assert_eq!(
-        args.len(),
-        3,
-        "Usage: $./blindfold_chess <input_pgn_file> <output_file>"
-    );
-    let read_path = Path::new(&args[1]);
+    let matches = App::new("Blindfold chess")
+        .version("1.0")
+        .author("Lucas Radaelli <lucasradaelli@gmail.com>")
+        .about("A tool to convert chess positions to an accessible format")
+        .arg(
+            Arg::with_name("INPUT")
+                .help("Sets the input file to use")
+                .required(true)
+                .index(1),
+        )
+        .arg(
+            Arg::with_name("OUTPUT")
+                .help("Sets the output file to write converted positions")
+                .required(true)
+                .index(2),
+        )
+        .arg(
+            Arg::with_name("with_comments")
+                .short("c")
+                .long("with_comments")
+                .help("If set, adds pgn comments into the converted positions"),
+        )
+        .arg(
+            Arg::with_name("with_side_lines")
+                .short("s")
+                .long("with_side_lines")
+                .help("If set, includes side lines in converted positions"),
+        )
+        .get_matches();
+
+    let read_path = Path::new(matches.value_of("INPUT").unwrap());
     let input_display = read_path.display();
     let mut input_file = match File::open(&read_path) {
         Err(why) => panic!("couldn't open {}: {}", input_display, why),
@@ -44,7 +68,7 @@ fn main() -> std::io::Result<()> {
         description.push_str(&single_exercise);
     }
 
-    let output_path = Path::new(&args[2]);
+    let output_path = Path::new(matches.value_of("OUTPUT").unwrap());
     let output_display = output_path.display();
     let mut output_file = match File::create(&output_path) {
         Err(why) => panic!("couldn't create {}: {}", output_display, why),
