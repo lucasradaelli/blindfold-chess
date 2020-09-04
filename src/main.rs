@@ -61,7 +61,15 @@ fn main() -> std::io::Result<()> {
     };
     let mut buffer = Vec::new();
     input_file.read_to_end(&mut buffer)?;
-    let mut position_converter = PositionConverter::new();
+    let mut with_side_lines = false;
+    let mut with_comments = false;
+    if matches.value_of("with_side_lines").is_some() {
+        with_side_lines = true;
+    }
+    if matches.value_of("with_comments").is_some() {
+        with_comments = true;
+    }
+    let mut position_converter = PositionConverter::new_with_config(with_side_lines, with_comments);
     let mut reader = BufferedReader::new_cursor(&buffer[..]);
     let mut description = String::new();
     while let Some(single_exercise) = reader.read_game(&mut position_converter)? {

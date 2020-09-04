@@ -38,6 +38,10 @@ pub struct PositionConverter {
     exercise_number: usize,
     // When parsing an exercise, holds the number of ply moves in the solution.
     ply_count: usize,
+    // Whether to include side lines.
+    with_side_lines: bool,
+    // Whether to include pgn comments into the converted positions.
+    with_comments: bool,
 }
 
 impl PositionConverter {
@@ -48,7 +52,16 @@ impl PositionConverter {
             final_description: String::from(""),
             exercise_number: 0,
             ply_count: 0,
+            with_side_lines: false,
+            with_comments: false,
         }
+    }
+
+    pub fn new_with_config(with_side_lines: bool, with_comments: bool) -> PositionConverter {
+        let mut pc = PositionConverter::new();
+        pc.with_side_lines = with_side_lines;
+        pc.with_comments = with_comments;
+        pc
     }
 
     fn describe_board(
@@ -233,7 +246,12 @@ impl Visitor for PositionConverter {
 
     fn nag(&mut self, _nag: Nag) {}
 
-    fn comment(&mut self, _comment: RawComment) {}
+    fn comment(&mut self, _comment: RawComment) {
+        if self.with_comments {
+            let comment_str = str::from_utf8(_comment.as_bytes()).unwrap();
+            write!(self.moves, "\n{}\n", comment_str).unwrap();
+        }
+    }
 
     fn begin_variation(&mut self) -> Skip {
         Skip(true) // stay in the mainline

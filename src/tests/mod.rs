@@ -178,3 +178,33 @@ Solution:
     assert_eq!(&description[..], result);
     Ok(())
 }
+
+#[test]
+fn parses_exercise_with_comments() -> io::Result<()> {
+    let pgn = b"
+[FEN \"7k/8/8/8/8/8/8/6RK w - - 0 1\"]
+
+1. Kh2 {and so the king moves}
+
+ 1-0
+        ";
+    let mut reader = BufferedReader::new_cursor(&pgn[..]);
+    let mut position_converter = PositionConverter::new_with_config(false, true);
+    let description = reader.read_game(&mut position_converter)?.unwrap();
+
+    let result = "Exercise 1:
+White to move:
+White:
+Rook Gustav1
+King Hector1
+Black:
+King Hector8
+Solution:
+1. King Hector2 
+and so the king moves
+";
+
+    assert_eq!(&description[..], result);
+    Ok(())
+}
+
