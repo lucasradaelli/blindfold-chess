@@ -36,8 +36,11 @@ pub struct PositionConverter {
     final_description: String,
     // Number of  the exercise coming from the pgn. A pgn file with 5 exercises would have 5 exercises for example.
     exercise_number: usize,
-    // When parsing an exercise, holds the number of ply moves in the solution.
-    ply_count: usize,
+    // A stack that contains the ply counts of the pgn variations inside of the exercise being parsed.
+    // For example:
+    // 1. e4 (1. d4 Nf6) e5 *
+    // The stack will have one value keeping track of the ply count of the main line. Once the first variation starts with 1. d4, another value is stacked and the ply count continues from there. Once the variation finishes, the ply count returns to the value of the previous line.
+    ply_counts: Vec<usize>,
     // Whether to include side lines.
     with_side_lines: bool,
     // Whether to include pgn comments into the converted positions.
@@ -51,7 +54,7 @@ impl PositionConverter {
             moves: String::from(""),
             final_description: String::from(""),
             exercise_number: 0,
-            ply_count: 0,
+            ply_counts: vec![0],
             with_side_lines: false,
             with_comments: false,
         }
@@ -159,6 +162,17 @@ impl PositionConverter {
         write!(&mut square_description, "{}{}", file_name, rank).unwrap();
         square_description
     }
+
+    fn get_ply_count(&self) -> usize {
+        let ply_count = *self.ply_counts.last().unwrap();
+        ply_count
+    }
+
+    fn get_move_count(&self) -> usize {
+        // Each two ply = one move in chess.
+        let move_count: usize = self.get_ply_count() / 2 + 1;
+        move_count
+    }
 }
 
 impl Visitor for PositionConverter {
@@ -183,12 +197,10 @@ impl Visitor for PositionConverter {
     }
 
     fn san(&mut self, _san_plus: SanPlus) {
-        self.ply_count += 1;
+        *self.ply_counts.last_mut().unwrap() += 1;
         // Writes the move number every two moves, E.G. 1. e4 e5 2. Nf3 Nc6.
-        if self.ply_count % 2 == 1 {
-            // Each two ply = one move in chess.
-            let move_count: usize = self.ply_count / 2 + 1;
-            write!(self.moves, "{}. ", move_count).unwrap();
+        if self.get_ply_count() % 2 == 1 {
+            write!(self.moves, "{}. ", self.get_move_count()).unwrap();
         }
         match _san_plus.san {
             San::Normal {
@@ -237,7 +249,7 @@ impl Visitor for PositionConverter {
             _ => write!(self.moves, "--").unwrap(),
         }
         // Keep two moves per line.
-        if self.ply_count % 2 == 0 {
+        if self.get_ply_count() % 2 == 0 {
             write!(self.moves, "\n").unwrap();
         } else {
             write!(self.moves, " ").unwrap();
@@ -254,16 +266,42 @@ impl Visitor for PositionConverter {
     }
 
     fn begin_variation(&mut self) -> Skip {
-        Skip(true) // stay in the mainline
+        if !self.with_side_lines {
+            return Skip(true); // stay in the mainline
+        }
+        // Note that the ply count is reset by one since a side line in pgn undoes the last move and then starts.
+
+        self.ply_counts.push(self.get_ply_count() - 1);
+        // We write the move count here to support things of the form 1. e4 e5 (1... d5)
+        if self.get_ply_count() % 2 == 1 {
+            write!(self.moves, "({}... ", self.get_move_count()).unwrap();
+        } else {
+            write!(self.moves, "\n(").unwrap();
+        }
+        Skip(false)
     }
 
-    fn end_variation(&mut self) {}
+    fn end_variation(&mut self) {
+        if self.get_ply_count() % 2 == 0 {
+            // Writes the \n after the ) of the end line.
+            unsafe {
+                let buffer = self.moves.as_mut_vec();
+                let index = buffer.len() - 1;
+                buffer[index] = ')' as u8;
+            }
+            write!(self.moves, "\n").unwrap();
+        } else {
+            write!(self.moves, ")\n").unwrap();
+        }
+
+        self.ply_counts.pop();
+    }
 
     fn outcome(&mut self, _outcome: Option<Outcome>) {}
 
     fn end_game(&mut self) -> Self::Result {
         // If there was an odd ply, this means that |moves| is missing a new line to end it.
-        if self.ply_count % 2 == 1 {
+        if self.ply_counts.last().unwrap() % 2 == 1 {
             unsafe {
                 let buffer = self.moves.as_mut_vec();
                 let index = buffer.len() - 1;
@@ -284,7 +322,7 @@ impl Visitor for PositionConverter {
         // Clears fields for next round.
         self.starting_fen.clear();
         self.moves.clear();
-        self.ply_count = 0;
+        self.ply_counts = vec![0];
         // TODO: is there a way to return self.final_description directly from this mutable reference?
         // alternative 1:
         //self.final_description.clone()
