@@ -63,10 +63,10 @@ fn main() -> std::io::Result<()> {
     input_file.read_to_end(&mut buffer)?;
     let mut with_side_lines = false;
     let mut with_comments = false;
-    if matches.value_of("with_side_lines").is_some() {
+    if matches.occurrences_of("with_side_lines") > 0 {
         with_side_lines = true;
     }
-    if matches.value_of("with_comments").is_some() {
+    if matches.occurrences_of("with_comments") > 0 {
         with_comments = true;
     }
     let mut position_converter = PositionConverter::new_with_config(with_side_lines, with_comments);
