@@ -9,4 +9,4 @@ edition = "2018"
 [dependencies]
 clap = "2.33.3"
 pgn-reader = "0.15.0"
-pleco = "0.5.0"
+tanton = "1.0.0"

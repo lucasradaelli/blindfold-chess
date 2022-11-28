@@ -19,9 +19,9 @@ mod tests;
 
 use pgn_reader::{CastlingSide, Role};
 use pgn_reader::{Nag, Outcome, RawComment, RawHeader, San, SanPlus, Skip, Visitor};
-use pleco::board::{piece_locations, Board};
-use pleco::core::sq::SQ;
-use pleco::core::Player;
+use tanton::board::{piece_locations, Board};
+use tanton::core::sq::SQ;
+use tanton::core::Player;
 use std;
 use std::collections::HashMap;
 use std::fmt::Write;
